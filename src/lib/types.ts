@@ -4,3 +4,12 @@ export type Meal = {
   name: string;
   calories: number;
 };
+
+export type DailyLog = {
+  meals: Meal[];
+  calorieTarget: number;
+};
+
+export type History = {
+  [date: string]: DailyLog;
+};

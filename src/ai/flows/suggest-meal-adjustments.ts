@@ -36,6 +36,7 @@ const prompt = ai.definePrompt({
   input: {schema: SuggestMealAdjustmentsInputSchema},
   output: {schema: SuggestMealAdjustmentsOutputSchema},
   prompt: `You are a nutritional advisor. Analyze the user's logged meals and remaining calorie target, and provide suggestions for their next meal.
+keep the meal suggestion according to general Pakistani cuisine.
 
 Logged Meals: {{{loggedMeals}}}
 Remaining Calories: {{{remainingCalories}}}
