@@ -15,6 +15,7 @@ export type DailyLog = {
   meals: Meal[];
   activities: Activity[];
   calorieTarget: number;
+  weight?: number;
 };
 
 export type History = {

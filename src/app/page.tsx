@@ -10,6 +10,7 @@ import MealSuggester from "@/components/dashboard/MealSuggester";
 import Reports from "@/components/dashboard/Reports";
 import Settings from "@/components/dashboard/Settings";
 import ActivityLogger from "@/components/dashboard/ActivityLogger";
+import WeightTracker from "@/components/dashboard/WeightTracker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const initialMeals: Meal[] = [
@@ -114,6 +115,10 @@ export default function Home() {
   const handleSettingsChange = (newSettings: UserSettings) => {
     setUserSettings(newSettings);
   };
+
+  const handleLogWeight = (weight: number) => {
+    updateTodayLog({ weight });
+  };
   
   const totalConsumedCalories = useMemo(() => {
     return todayLog.meals.reduce((acc, meal) => acc + meal.calories, 0);
@@ -143,9 +148,10 @@ export default function Home() {
       </header>
       <main className="container mx-auto p-4 md:p-8">
          <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="weight">Weight</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -179,6 +185,13 @@ export default function Home() {
               activities={todayLog.activities}
               onAddActivity={handleAddActivity}
               onDeleteActivity={handleDeleteActivity}
+            />
+          </TabsContent>
+          <TabsContent value="weight">
+            <WeightTracker
+              history={history}
+              todayWeight={todayLog.weight}
+              onLogWeight={handleLogWeight}
             />
           </TabsContent>
           <TabsContent value="reports">
