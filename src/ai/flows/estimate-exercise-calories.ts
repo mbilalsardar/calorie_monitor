@@ -29,7 +29,7 @@ const prompt = ai.definePrompt({
   input: {schema: EstimateExerciseCaloriesInputSchema},
   output: {schema: EstimateExerciseCaloriesOutputSchema},
   prompt: `You are a fitness and exercise expert. Your task is to estimate the calories burned for a given exercise.
-Provide a reasonable calorie estimate for a 30-minute session of the following exercise for an average person.
+Use web search to find a reliable estimate for the calories burned. Base your estimate on a 30-minute session for an average person (e.g., around 150-180 lbs or 70-80 kg).
 Return only the number of calories burned.
 
 Exercise: {{{exerciseDescription}}}

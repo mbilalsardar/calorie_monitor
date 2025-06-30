@@ -29,6 +29,7 @@ const prompt = ai.definePrompt({
   input: {schema: EstimateCaloriesInputSchema},
   output: {schema: EstimateCaloriesOutputSchema},
   prompt: `You are a nutrition expert. Your task is to estimate the calories for a given food item.
+Use web search to find the calorie count for the given food from reliable sources like the USDA food database, CalorieKing, or other reputable health websites.
 Provide a reasonable calorie estimate for a standard serving size of the following food.
 Return only the number of calories.
 
