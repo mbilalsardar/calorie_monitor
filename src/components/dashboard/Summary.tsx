@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react';
-import { Target, Flame, Edit, Check, Activity as ActivityIcon } from 'lucide-react';
+import { Target, Flame, Edit, Check, Activity as ActivityIcon, Goal } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Input } from '@/components/ui/input';
@@ -61,6 +61,7 @@ export default function Summary({ totalConsumedCalories, totalBurnedCalories, ca
               <p className="text-xl font-bold">{totalBurnedCalories.toLocaleString()}</p>
             </div>
             <div className="p-4 bg-accent/10 rounded-lg">
+              <Goal className="mx-auto h-6 w-6 text-accent mb-2" />
                <p 
                 className={cn("text-sm text-muted-foreground", remainingCalories < 0 && "text-destructive/80")}>
                 Remaining
