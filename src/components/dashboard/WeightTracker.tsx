@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -12,7 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
-import { TrendingUp, Scale } from "lucide-react";
+import { TrendingUp, Scale, CalendarIcon } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 const weightSchema = z.object({
   weight: z.coerce.number().positive("Weight must be a positive number.").min(1),
@@ -20,17 +23,26 @@ const weightSchema = z.object({
 
 type WeightTrackerProps = {
   history: History;
-  todayWeight?: number;
-  onLogWeight: (weight: number) => void;
+  onLogWeight: (weight: number, date: string) => void;
 };
 
-export default function WeightTracker({ history, todayWeight, onLogWeight }: WeightTrackerProps) {
+export default function WeightTracker({ history, onLogWeight }: WeightTrackerProps) {
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  
   const form = useForm<z.infer<typeof weightSchema>>({
     resolver: zodResolver(weightSchema),
-    values: {
-      weight: todayWeight || 0,
+    defaultValues: {
+      weight: 0,
     },
   });
+  
+  useEffect(() => {
+    if (date) {
+        const dateString = format(date, 'yyyy-MM-dd');
+        const weightForDate = history[dateString]?.weight;
+        form.reset({ weight: weightForDate || 0 });
+    }
+  }, [date, history, form]);
 
   const chartData = useMemo(() => {
     return Object.entries(history)
@@ -43,20 +55,47 @@ export default function WeightTracker({ history, todayWeight, onLogWeight }: Wei
   }, [history]);
 
   function onSubmit(values: z.infer<typeof weightSchema>) {
-    onLogWeight(values.weight);
+    if (date) {
+      onLogWeight(values.weight, format(date, 'yyyy-MM-dd'));
+    }
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Weight Tracker</CardTitle>
-        <CardDescription>Log your weight and see your progress over time.</CardDescription>
+        <CardDescription>Log your weight for any day and see your progress over time.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
-          <h3 className="text-lg font-semibold mb-2">Log Today's Weight</h3>
+          <h3 className="text-lg font-semibold mb-2">Log Your Weight</h3>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-end gap-4">
+              <FormItem className="flex flex-col">
+                  <FormLabel>Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-[240px] justify-start text-left font-normal",
+                          !date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+              </FormItem>
               <FormField
                 control={form.control}
                 name="weight"

@@ -116,8 +116,15 @@ export default function Home() {
     setUserSettings(newSettings);
   };
 
-  const handleLogWeight = (weight: number) => {
-    updateTodayLog({ weight });
+  const handleLogWeight = (weight: number, date: string) => {
+    setHistory(prev => {
+        const logForDate = prev[date] || { meals: [], activities: [], calorieTarget: 2000 };
+        const updatedLog = { ...logForDate, weight };
+        return {
+            ...prev,
+            [date]: updatedLog,
+        };
+    });
   };
   
   const totalConsumedCalories = useMemo(() => {
@@ -190,7 +197,6 @@ export default function Home() {
           <TabsContent value="weight">
             <WeightTracker
               history={history}
-              todayWeight={todayLog.weight}
               onLogWeight={handleLogWeight}
             />
           </TabsContent>
