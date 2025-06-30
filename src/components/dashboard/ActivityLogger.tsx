@@ -18,7 +18,7 @@ import { ScrollArea } from "../ui/scroll-area";
 
 const activitySchema = z.object({
   name: z.string().min(1, "Exercise name is required."),
-  caloriesBurned: z.coerce.number(),
+  caloriesBurned: z.coerce.number().min(0, "Calories must be a positive number."),
 });
 
 type ActivityLoggerProps = {
@@ -39,10 +39,13 @@ export default function ActivityLogger({ activities, onAddActivity, onDeleteActi
     },
   });
 
-  async function onSubmit(values: z.infer<typeof activitySchema>) {
+  const handleExerciseBlur = async () => {
+    const exerciseName = form.getValues("name");
+    if (!exerciseName) return;
+
     setIsEstimating(true);
     try {
-      const result = await getExerciseCalorieEstimate(values.name);
+      const result = await getExerciseCalorieEstimate(exerciseName);
       if (result.error) {
         toast({
           variant: "destructive",
@@ -50,8 +53,7 @@ export default function ActivityLogger({ activities, onAddActivity, onDeleteActi
           description: result.error,
         });
       } else if (result.caloriesBurned) {
-        onAddActivity({ name: values.name, caloriesBurned: result.caloriesBurned });
-        form.reset();
+        form.setValue("caloriesBurned", result.caloriesBurned, { shouldValidate: true });
       }
     } catch (error) {
       toast({
@@ -62,6 +64,12 @@ export default function ActivityLogger({ activities, onAddActivity, onDeleteActi
     } finally {
       setIsEstimating(false);
     }
+  };
+
+
+  function onSubmit(values: z.infer<typeof activitySchema>) {
+    onAddActivity(values);
+    form.reset();
   }
 
   return (
@@ -69,31 +77,53 @@ export default function ActivityLogger({ activities, onAddActivity, onDeleteActi
       <CardHeader>
         <CardTitle>Log Your Activity</CardTitle>
         <CardDescription>
-          Add an exercise to see how many calories you've burned. The AI will estimate the calories for a 30-minute session.
+          Add an exercise and its calorie burn, or type an exercise and press Tab to get an AI estimate.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col flex-grow">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-end gap-4 mb-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mb-6">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
-                <FormItem className="flex-grow">
+                <FormItem className="md:col-span-1">
                   <FormLabel>Exercise</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g., Brisk Walking"
                       {...field}
+                      onBlur={async (e) => {
+                        field.onBlur();
+                        await handleExerciseBlur();
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isEstimating}>
-              {isEstimating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />} 
-              Add Activity
+            <FormField
+              control={form.control}
+              name="caloriesBurned"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    <div className="flex items-center gap-2">
+                      Calories Burned
+                      {isEstimating && <Loader2 className="h-4 w-4 animate-spin" />}
+                    </div>
+                  </FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 150" {...field} disabled={isEstimating} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full md:w-auto" disabled={isEstimating}>
+                <PlusCircle className="mr-2 h-4 w-4" /> 
+                Add Activity
             </Button>
           </form>
         </Form>
