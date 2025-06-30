@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { Meal, History, DailyLog } from "@/lib/types";
+import type { Meal, History, DailyLog, UserSettings } from "@/lib/types";
 import { Logo } from "@/components/Logo";
 import Summary from "@/components/dashboard/Summary";
 import MealLogger from "@/components/dashboard/MealLogger";
 import CalorieChart from "@/components/dashboard/CalorieChart";
 import MealSuggester from "@/components/dashboard/MealSuggester";
 import Reports from "@/components/dashboard/Reports";
+import Settings from "@/components/dashboard/Settings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const initialMeals: Meal[] = [
@@ -19,6 +20,7 @@ const getToday = () => new Date().toISOString().split('T')[0];
 
 export default function Home() {
   const [history, setHistory] = useState<History>({});
+  const [userSettings, setUserSettings] = useState<Partial<UserSettings>>({});
   const [isMounted, setIsMounted] = useState(false);
   const [today, setToday] = useState(getToday());
 
@@ -56,14 +58,21 @@ export default function Home() {
     }
 
     setHistory(loadedHistory);
+    
+    const storedSettings = localStorage.getItem("calorie-compass-settings");
+    if (storedSettings) {
+      setUserSettings(JSON.parse(storedSettings));
+    }
+
     setIsMounted(true);
   }, []);
 
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem("calorie-compass-history", JSON.stringify(history));
+      localStorage.setItem("calorie-compass-settings", JSON.stringify(userSettings));
     }
-  }, [history, isMounted]);
+  }, [history, userSettings, isMounted]);
 
   const updateTodayLog = (newLog: Partial<DailyLog>) => {
     setHistory(prev => ({
@@ -83,6 +92,10 @@ export default function Home() {
 
   const handleTargetChange = (newTarget: number) => {
     updateTodayLog({ calorieTarget: newTarget });
+  };
+
+  const handleSettingsChange = (newSettings: UserSettings) => {
+    setUserSettings(newSettings);
   };
   
   const totalCalories = useMemo(() => {
@@ -108,9 +121,10 @@ export default function Home() {
       </header>
       <main className="container mx-auto p-4 md:p-8">
          <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
           <TabsContent value="dashboard">
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -138,6 +152,13 @@ export default function Home() {
           </TabsContent>
           <TabsContent value="reports">
             <Reports history={history} />
+          </TabsContent>
+          <TabsContent value="settings">
+            <Settings 
+              settings={userSettings}
+              onSettingsChange={handleSettingsChange}
+              onTargetChange={handleTargetChange}
+            />
           </TabsContent>
         </Tabs>
       </main>

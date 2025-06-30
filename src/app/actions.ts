@@ -2,7 +2,8 @@
 
 import { suggestMealAdjustments } from '@/ai/flows/suggest-meal-adjustments';
 import { estimateCalories } from '@/ai/flows/estimate-calories';
-import type { Meal } from '@/lib/types';
+import { calculateCalorieTarget } from '@/ai/flows/calculate-calorie-target';
+import type { Meal, UserSettings } from '@/lib/types';
 
 export async function getCalorieEstimate(foodName: string) {
   if (!foodName) {
@@ -45,5 +46,15 @@ export async function getMealSuggestions(
   } catch (error) {
     console.error('Error getting meal suggestions:', error);
     return { error: 'Failed to get meal suggestions. Please try again later.' };
+  }
+}
+
+export async function getCalorieTargetSuggestion(settings: UserSettings) {
+  try {
+    const result = await calculateCalorieTarget(settings);
+    return result;
+  } catch (error) {
+    console.error('Error getting calorie target suggestion:', error);
+    return { error: 'Failed to get calorie target suggestion. Please try again later.' };
   }
 }

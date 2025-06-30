@@ -13,3 +13,12 @@ export type DailyLog = {
 export type History = {
   [date: string]: DailyLog;
 };
+
+export type UserSettings = {
+  height: number; // in cm
+  weight: number; // in kg
+  age: number;
+  gender: 'male' | 'female';
+  activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very-active';
+  goal: 'lose' | 'maintain' | 'gain';
+};

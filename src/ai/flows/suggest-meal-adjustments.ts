@@ -1,4 +1,4 @@
-// use server'
+'use server';
 
 /**
  * @fileOverview Provides meal adjustment suggestions based on remaining calorie target.
