@@ -3,7 +3,8 @@
 import { suggestMealAdjustments } from '@/ai/flows/suggest-meal-adjustments';
 import { estimateCalories } from '@/ai/flows/estimate-calories';
 import { calculateCalorieTarget } from '@/ai/flows/calculate-calorie-target';
-import type { Meal, UserSettings } from '@/lib/types';
+import { estimateExerciseCalories } from '@/ai/flows/estimate-exercise-calories';
+import type { Meal, UserSettings, Activity } from '@/lib/types';
 
 export async function getCalorieEstimate(foodName: string) {
   if (!foodName) {
@@ -15,6 +16,19 @@ export async function getCalorieEstimate(foodName: string) {
   } catch (error) {
     console.error('Error getting calorie estimate:', error);
     return { error: 'Failed to get calorie estimate. Please try again later.' };
+  }
+}
+
+export async function getExerciseCalorieEstimate(exerciseDescription: string) {
+  if (!exerciseDescription) {
+    return { error: 'Exercise description is required.' };
+  }
+  try {
+    const result = await estimateExerciseCalories({ exerciseDescription });
+    return result;
+  } catch (error) {
+    console.error('Error getting exercise calorie estimate:', error);
+    return { error: 'Failed to get exercise calorie estimate. Please try again later.' };
   }
 }
 

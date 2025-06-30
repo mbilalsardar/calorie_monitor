@@ -5,8 +5,15 @@ export type Meal = {
   calories: number;
 };
 
+export type Activity = {
+  id: string;
+  name: string;
+  caloriesBurned: number;
+};
+
 export type DailyLog = {
   meals: Meal[];
+  activities: Activity[];
   calorieTarget: number;
 };
 

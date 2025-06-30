@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { Meal, History, DailyLog, UserSettings } from "@/lib/types";
+import type { Meal, History, DailyLog, UserSettings, Activity } from "@/lib/types";
 import { Logo } from "@/components/Logo";
 import Summary from "@/components/dashboard/Summary";
 import MealLogger from "@/components/dashboard/MealLogger";
@@ -9,6 +9,7 @@ import CalorieChart from "@/components/dashboard/CalorieChart";
 import MealSuggester from "@/components/dashboard/MealSuggester";
 import Reports from "@/components/dashboard/Reports";
 import Settings from "@/components/dashboard/Settings";
+import ActivityLogger from "@/components/dashboard/ActivityLogger";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const initialMeals: Meal[] = [
@@ -25,7 +26,7 @@ export default function Home() {
   const [today, setToday] = useState(getToday());
 
   const todayLog: DailyLog = useMemo(() => {
-    return history[today] || { meals: [], calorieTarget: 2000 };
+    return history[today] || { meals: [], activities: [], calorieTarget: 2000 };
   }, [history, today]);
 
   useEffect(() => {
@@ -46,7 +47,7 @@ export default function Home() {
       if (storedMeals) {
         const meals: Meal[] = JSON.parse(storedMeals);
         const calorieTarget: number = storedTarget ? JSON.parse(storedTarget) : 2000;
-        loadedHistory[today] = { meals, calorieTarget };
+        loadedHistory[today] = { meals, calorieTarget, activities: [] };
 
         localStorage.removeItem("calorie-compass-meals");
         localStorage.removeItem("calorie-compass-target");
@@ -54,7 +55,14 @@ export default function Home() {
     }
     
     if (!loadedHistory[today]) {
-        loadedHistory[today] = { meals: initialMeals, calorieTarget: 2000 };
+        loadedHistory[today] = { meals: initialMeals, activities: [], calorieTarget: 2000 };
+    }
+
+    // Ensure activities array exists for all logs
+    for (const date in loadedHistory) {
+        if (!loadedHistory[date].activities) {
+            loadedHistory[date].activities = [];
+        }
     }
 
     setHistory(loadedHistory);
@@ -77,7 +85,7 @@ export default function Home() {
   const updateTodayLog = (newLog: Partial<DailyLog>) => {
     setHistory(prev => ({
       ...prev,
-      [today]: { ...(prev[today] || { meals: [], calorieTarget: 2000 }), ...newLog },
+      [today]: { ...(prev[today] || { meals: [], activities: [], calorieTarget: 2000 }), ...newLog },
     }));
   };
 
@@ -89,6 +97,15 @@ export default function Home() {
   const handleDeleteMeal = (id: string) => {
     updateTodayLog({ meals: todayLog.meals.filter((meal) => meal.id !== id) });
   };
+  
+  const handleAddActivity = (activity: Omit<Activity, "id">) => {
+    const newActivity = { ...activity, id: new Date().toISOString() };
+    updateTodayLog({ activities: [...todayLog.activities, newActivity] });
+  };
+
+  const handleDeleteActivity = (id: string) => {
+    updateTodayLog({ activities: todayLog.activities.filter((activity) => activity.id !== id) });
+  };
 
   const handleTargetChange = (newTarget: number) => {
     updateTodayLog({ calorieTarget: newTarget });
@@ -98,11 +115,16 @@ export default function Home() {
     setUserSettings(newSettings);
   };
   
-  const totalCalories = useMemo(() => {
+  const totalConsumedCalories = useMemo(() => {
     return todayLog.meals.reduce((acc, meal) => acc + meal.calories, 0);
   }, [todayLog.meals]);
+
+  const totalBurnedCalories = useMemo(() => {
+    return todayLog.activities.reduce((acc, activity) => acc + activity.caloriesBurned, 0);
+  }, [todayLog.activities]);
   
-  const remainingCalories = todayLog.calorieTarget - totalCalories;
+  const netCalories = totalConsumedCalories - totalBurnedCalories;
+  const remainingCalories = todayLog.calorieTarget - netCalories;
 
   if (!isMounted) {
     return (
@@ -121,8 +143,9 @@ export default function Home() {
       </header>
       <main className="container mx-auto p-4 md:p-8">
          <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -130,7 +153,8 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-1 lg:col-span-2">
                 <Summary 
-                  totalCalories={totalCalories}
+                  totalConsumedCalories={totalConsumedCalories}
+                  totalBurnedCalories={totalBurnedCalories}
                   calorieTarget={todayLog.calorieTarget}
                   onTargetChange={handleTargetChange}
                 />
@@ -149,6 +173,13 @@ export default function Home() {
                 <MealSuggester meals={todayLog.meals} remainingCalories={remainingCalories} />
               </div>
             </div>
+          </TabsContent>
+           <TabsContent value="activity">
+            <ActivityLogger
+              activities={todayLog.activities}
+              onAddActivity={handleAddActivity}
+              onDeleteActivity={handleDeleteActivity}
+            />
           </TabsContent>
           <TabsContent value="reports">
             <Reports history={history} />

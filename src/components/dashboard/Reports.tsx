@@ -49,7 +49,7 @@ export default function Reports({ history }: ReportsProps) {
     <Card>
       <CardHeader>
         <CardTitle>Reports</CardTitle>
-        <CardDescription>A historical view of your daily calorie intake.</CardDescription>
+        <CardDescription>A historical view of your daily calorie intake and expenditure.</CardDescription>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[600px]">
@@ -57,8 +57,11 @@ export default function Reports({ history }: ReportsProps) {
             {sortedDates.map((date) => {
               const dayData = history[date];
               if (!dayData) return null;
-              const totalCalories = dayData.meals.reduce((acc, meal) => acc + meal.calories, 0);
-              const progress = dayData.calorieTarget > 0 ? (totalCalories / dayData.calorieTarget) * 100 : 0;
+              
+              const totalConsumed = dayData.meals.reduce((acc, meal) => acc + meal.calories, 0);
+              const totalBurned = (dayData.activities || []).reduce((acc, activity) => acc + activity.caloriesBurned, 0);
+              const netCalories = totalConsumed - totalBurned;
+              const progress = dayData.calorieTarget > 0 ? (netCalories / dayData.calorieTarget) * 100 : 0;
               
               return (
                 <AccordionItem value={date} key={date}>
@@ -66,35 +69,62 @@ export default function Reports({ history }: ReportsProps) {
                     <div className="flex justify-between w-full pr-4 text-sm md:text-base">
                       <span>{format(parseISO(date), 'EEEE, MMMM d, yyyy')}</span>
                       <span className="text-sm text-muted-foreground">
-                        {totalCalories.toLocaleString()} / {dayData.calorieTarget.toLocaleString()} kcal ({Math.round(progress)}%)
+                        {netCalories.toLocaleString()} / {dayData.calorieTarget.toLocaleString()} net kcal ({Math.round(progress)}%)
                       </span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Meal</TableHead>
-                          <TableHead className="text-right">Calories</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {dayData.meals.length > 0 ? dayData.meals.map((meal) => (
-                          <TableRow key={meal.id}>
-                            <TableCell className="font-medium">{meal.type}</TableCell>
-                            <TableCell>{meal.name}</TableCell>
-                            <TableCell className="text-right">{meal.calories.toLocaleString()}</TableCell>
-                          </TableRow>
-                        )) : (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-center text-muted-foreground">
-                              No meals logged for this day.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold mb-2">Meals Consumed</h4>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Type</TableHead>
+                              <TableHead>Meal</TableHead>
+                              <TableHead className="text-right">Calories</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {dayData.meals.length > 0 ? dayData.meals.map((meal) => (
+                              <TableRow key={meal.id}>
+                                <TableCell className="font-medium">{meal.type}</TableCell>
+                                <TableCell>{meal.name}</TableCell>
+                                <TableCell className="text-right">{meal.calories.toLocaleString()}</TableCell>
+                              </TableRow>
+                            )) : (
+                              <TableRow>
+                                <TableCell colSpan={3} className="text-center text-muted-foreground">
+                                  No meals logged for this day.
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+
+                      {(dayData.activities && dayData.activities.length > 0) && (
+                        <div>
+                          <h4 className="font-semibold mb-2">Activities Logged</h4>
+                          <Table>
+                             <TableHeader>
+                              <TableRow>
+                                <TableHead>Exercise</TableHead>
+                                <TableHead className="text-right">Calories Burned</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {dayData.activities.map((activity) => (
+                                <TableRow key={activity.id}>
+                                  <TableCell className="font-medium">{activity.name}</TableCell>
+                                  <TableCell className="text-right">{activity.caloriesBurned.toLocaleString()}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               );
