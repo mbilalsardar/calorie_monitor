@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -66,14 +66,26 @@ export default function Settings({ settings, onSettingsChange, onTargetChange }:
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      height: settings.height || undefined,
-      weight: settings.weight || undefined,
-      age: settings.age || undefined,
+      height: settings.height || '',
+      weight: settings.weight || '',
+      age: settings.age || '',
       gender: settings.gender || 'male',
       activityLevel: settings.activityLevel || 'sedentary',
       goal: settings.goal || 'maintain',
     },
   });
+
+  useEffect(() => {
+    form.reset({
+      height: settings.height || '',
+      weight: settings.weight || '',
+      age: settings.age || '',
+      gender: settings.gender || 'male',
+      activityLevel: settings.activityLevel || 'sedentary',
+      goal: settings.goal || 'maintain',
+    });
+  }, [settings, form]);
+
 
   const onSubmit = (values: SettingsFormValues) => {
     onSettingsChange(values);
@@ -184,7 +196,7 @@ export default function Settings({ settings, onSettingsChange, onTargetChange }:
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Gender</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select gender" />
@@ -205,7 +217,7 @@ export default function Settings({ settings, onSettingsChange, onTargetChange }:
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Activity Level</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select activity level" />
@@ -229,7 +241,7 @@ export default function Settings({ settings, onSettingsChange, onTargetChange }:
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Goal</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select your goal" />
