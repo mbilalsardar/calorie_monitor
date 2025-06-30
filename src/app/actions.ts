@@ -1,7 +1,21 @@
 'use server';
 
 import { suggestMealAdjustments } from '@/ai/flows/suggest-meal-adjustments';
+import { estimateCalories } from '@/ai/flows/estimate-calories';
 import type { Meal } from '@/lib/types';
+
+export async function getCalorieEstimate(foodName: string) {
+  if (!foodName) {
+    return { error: 'Food name is required.' };
+  }
+  try {
+    const result = await estimateCalories({ foodName });
+    return result;
+  } catch (error) {
+    console.error('Error getting calorie estimate:', error);
+    return { error: 'Failed to get calorie estimate. Please try again later.' };
+  }
+}
 
 export async function getMealSuggestions(
   meals: Meal[],

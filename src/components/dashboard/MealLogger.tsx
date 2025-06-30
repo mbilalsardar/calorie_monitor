@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import type { Meal } from "@/lib/types";
+import { getCalorieEstimate } from "@/app/actions";
+import { useToast } from "@/hooks/use-toast";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Trash2, UtensilsCrossed } from "lucide-react";
+import { PlusCircle, Trash2, UtensilsCrossed, Loader2 } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 
 
@@ -28,6 +31,9 @@ type MealLoggerProps = {
 };
 
 export default function MealLogger({ meals, onAddMeal, onDeleteMeal }: MealLoggerProps) {
+  const [isEstimating, setIsEstimating] = useState(false);
+  const { toast } = useToast();
+
   const form = useForm<z.infer<typeof mealSchema>>({
     resolver: zodResolver(mealSchema),
     defaultValues: {
@@ -36,6 +42,34 @@ export default function MealLogger({ meals, onAddMeal, onDeleteMeal }: MealLogge
       type: "Breakfast",
     },
   });
+
+  const handleFoodBlur = async () => {
+    const foodName = form.getValues("name");
+    if (!foodName) return;
+
+    setIsEstimating(true);
+    try {
+      const result = await getCalorieEstimate(foodName);
+      if (result.error) {
+        toast({
+          variant: "destructive",
+          title: "Estimation Failed",
+          description: result.error,
+        });
+      } else if (result.calories) {
+        form.setValue("calories", result.calories, { shouldValidate: true });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Oh no! Something went wrong.",
+        description: "Could not fetch calorie estimate.",
+      });
+    } finally {
+      setIsEstimating(false);
+    }
+  };
+
 
   function onSubmit(values: z.infer<typeof mealSchema>) {
     onAddMeal(values as Omit<Meal, "id">);
@@ -46,7 +80,9 @@ export default function MealLogger({ meals, onAddMeal, onDeleteMeal }: MealLogge
     <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle>Log Your Meal</CardTitle>
-        <CardDescription>Add a new meal to your daily log.</CardDescription>
+        <CardDescription>
+          Add a meal. Type a food name and press Tab to get an AI calorie estimate.
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col flex-grow">
         <Form {...form}>
@@ -58,7 +94,14 @@ export default function MealLogger({ meals, onAddMeal, onDeleteMeal }: MealLogge
                 <FormItem className="md:col-span-2">
                   <FormLabel>Food</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Apple, Salad..." {...field} />
+                    <Input
+                      placeholder="e.g., Chicken Biryani"
+                      {...field}
+                      onBlur={async (e) => {
+                        field.onBlur();
+                        await handleFoodBlur();
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -69,9 +112,14 @@ export default function MealLogger({ meals, onAddMeal, onDeleteMeal }: MealLogge
               name="calories"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Calories (kcal)</FormLabel>
+                  <FormLabel>
+                    <div className="flex items-center gap-2">
+                      Calories (kcal)
+                      {isEstimating && <Loader2 className="h-4 w-4 animate-spin" />}
+                    </div>
+                  </FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="e.g., 95" {...field} />
+                    <Input type="number" placeholder="e.g., 450" {...field} disabled={isEstimating} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
