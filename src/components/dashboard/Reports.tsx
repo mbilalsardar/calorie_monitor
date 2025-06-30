@@ -18,7 +18,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "../ui/scroll-area";
 import { format, parseISO } from 'date-fns';
-import { Archive } from "lucide-react";
+import { Archive, Scale } from "lucide-react";
 
 type ReportsProps = {
   history: History;
@@ -75,6 +75,18 @@ export default function Reports({ history }: ReportsProps) {
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-4">
+                       {dayData.weight && dayData.weight > 0 && (
+                        <div>
+                          <h4 className="font-semibold mb-2 flex items-center gap-2">
+                            <Scale className="h-4 w-4 text-muted-foreground" />
+                            Weight Logged
+                          </h4>
+                          <div className="p-3 border rounded-lg bg-muted/20">
+                            <span className="font-medium">{dayData.weight} kg</span>
+                          </div>
+                        </div>
+                      )}
+
                       <div>
                         <h4 className="font-semibold mb-2">Meals Consumed</h4>
                         <Table>
