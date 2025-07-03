@@ -24,6 +24,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from 'date-fns';
 import { Archive, Scale, Calendar as CalendarIcon, X, Search } from "lucide-react";
+import HistoricalCharts from "./HistoricalCharts";
 
 type ReportsProps = {
   history: History;
@@ -91,9 +92,11 @@ export default function Reports({ history }: ReportsProps) {
     <Card>
       <CardHeader>
         <CardTitle>Reports</CardTitle>
-        <CardDescription>Search for a specific date or browse through your history page by page.</CardDescription>
+        <CardDescription>Review your historical data, trends, and browse your history.</CardDescription>
       </CardHeader>
       <CardContent>
+        <HistoricalCharts history={history} />
+        
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
           <div className="flex items-center gap-2">
             <Popover>
